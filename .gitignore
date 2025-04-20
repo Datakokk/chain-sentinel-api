@@ -1,0 +1,67 @@
+# Node.js / React Native
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.expo/
+.expo-shared/
+*.expo
+
+# React Native / iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+ios/Podfile.lock
+ios/DerivedData/
+
+# React Native / Android
+android/.gradle/
+android/app/build/
+android/.idea/
+android/local.properties
+
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log
+
+# FastAPI / Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.env.*
+venv/
+.envrc
+.mypy_cache/
+pytest_cache/
+*.db
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# General
+.DS_Store
+*.log
+*.bak
+*.swp
+*.tmp
+*.orig
+
+# Build / Output
+dist/
+build/
+coverage/
+*.zip
+
+# GCP / Deploy
+gcloudignore
+*.tar.gz
+*.json
+
+# Reportes Exportados
+*.pdf
+*.csv
