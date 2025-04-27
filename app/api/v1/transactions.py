@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from app.services.blockchain_service import get_transactions_by_address
 from app.models.transactions import Transaction
+from app.firebase.firestore_client import save_transaction
 
 router = APIRouter(
     prefix="/transactions",
@@ -9,16 +10,15 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# Test route
-@router.get("/{address}")
+# Transactions API routes
+@router.get("/{address}", response_model=List[Transaction])
 async def list_transactions(address: str):
     try:
         transactions = await get_transactions_by_address(address)
 
-        # Transformar 'from' y 'to' en 'from_address' y 'to_address'
         parsed_transactions = []
         for tx in transactions:
-            parsed_transactions.append({
+            transaction_data = {
                 "blockNumber": tx.get("blockNumber"),
                 "timeStamp": tx.get("timeStamp"),
                 "hash": tx.get("hash"),
@@ -38,7 +38,11 @@ async def list_transactions(address: str):
                 "confirmations": tx.get("confirmations"),
                 "methodId": tx.get("methodId"),
                 "functionName": tx.get("functionName"),
-            })
+            }
+            parsed_transactions.append(transaction_data)
+
+            # Save every transaction in Firestore
+            save_transaction(transaction_data)
 
         return parsed_transactions
     except Exception as e:
