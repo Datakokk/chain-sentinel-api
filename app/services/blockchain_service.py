@@ -1,11 +1,5 @@
-import os
+from app.core.config import settings
 import httpx
-from dotenv import load_dotenv
-
-load_dotenv()  # charge .env variables
-
-ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
-ETHERSCAN_API_URL = "https://api.etherscan.io/api"
 
 async def get_transactions_by_address(address: str):
     """Get transaction list from Etherscan by wallet address."""
@@ -16,15 +10,22 @@ async def get_transactions_by_address(address: str):
         "startblock": 0,
         "endblock": 99999999,
         "sort": "desc",
-        "apikey": ETHERSCAN_API_KEY,
+        "apikey": settings.ETHERSCAN_API_KEY,
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(ETHERSCAN_API_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            response = await client.get(settings.ETHERSCAN_API_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
 
-        if data["status"] != "1":
-            raise ValueError(f"Etherscan error: {data.get('message')}")
+            if data["status"] != "1":
+                raise ValueError(f"Etherscan error: {data.get('message')}")
 
-        return data["result"]
+            if not isinstance(data["result"], list):
+                raise ValueError("Unexpected response format from Etherscan.")
+
+            return data["result"]
+
+        except httpx.RequestError as e:
+            raise ValueError(f"Network error: {str(e)}")

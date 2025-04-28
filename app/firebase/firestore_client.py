@@ -1,21 +1,18 @@
-import os
-import firebase_admin
-from firebase_admin import credentials, firestore
-from dotenv import load_dotenv
+from google.cloud import firestore
+from google.oauth2 import service_account
+from app.core.config import settings
 
-load_dotenv()
+firestore_cred = service_account.Credentials.from_service_account_file(
+    settings.FIREBASE_CREDENTIALS
+)
 
-# Initialize Firebase Admin SDK
-if not firebase_admin._apps:
-    cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS"))
-    firebase_admin.initialize_app(cred)
+db = firestore.Client(credentials=firestore_cred)
 
-# Get Firestore client
-db = firestore.client()
+async def save_transactions_batch(transactions: list):
+    batch = db.batch()
 
-def save_transaction(transaction: dict):
-    """
-    Save a transaction document into the Firestore 'transactions' collection.
-    """
-    transaction_ref = db.collection("transactions").document(transaction["hash"])
-    transaction_ref.set(transaction)
+    for tx in transactions:
+        doc_ref = db.collection("transactions").document(tx["hash"])
+        batch.set(doc_ref, tx)
+
+    batch.commit()
