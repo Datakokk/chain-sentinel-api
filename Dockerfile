@@ -4,12 +4,10 @@ FROM python:3.13-slim
 # Install the necesary tools (include Rust and Cargo)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    build-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
     build-essential \
     curl \
     && curl https://sh.rustup.rs -sSf | sh -s -- -y \
-    && . "$HOME/.cargo/env" \
+    && export PATH="/root/.cargo/bin:$PATH" \
     && rm -rf /var/lib/apt/lists/*
 
 
