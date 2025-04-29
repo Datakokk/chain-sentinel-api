@@ -1,11 +1,17 @@
 # Lightweight base image with Python 3.11
 FROM python:3.13-slim
 
-# Avoid installation issues: install basic tools
+# Install the necesary tools (include Rust and Cargo)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    build-RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
     build-essential \
- && rm -rf /var/lib/apt/lists/*
+    curl \
+    && curl https://sh.rustup.rs -sSf | sh -s -- -y \
+    && . "$HOME/.cargo/env" \
+    && rm -rf /var/lib/apt/lists/*
+
 
 # Upgrade pip to the latest version
 RUN pip install --upgrade pip
@@ -17,6 +23,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Intall dependencies
+ENV PATH="/root/.cargo/bin:$PATH"
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the code
