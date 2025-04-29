@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Upgrade pip to the latest version
 RUN pip install --upgrade pip
+RUN pip install maturin
 
 # Set the working directory
 WORKDIR /app
