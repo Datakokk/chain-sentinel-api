@@ -1,6 +1,15 @@
 # Lightweight base image with Python 3.11
 FROM python:3.13-slim
 
+# Avoid installation issues: install basic tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+ && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip to the latest version
+RUN pip install --upgrade pip
+
 # Set the working directory
 WORKDIR /app
 
