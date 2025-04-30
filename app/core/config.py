@@ -4,6 +4,7 @@ import os
 load_dotenv()
 
 class Settings:
+    ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")
     ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
     ETHERSCAN_API_URL: str = "https://api.etherscan.io/api"
