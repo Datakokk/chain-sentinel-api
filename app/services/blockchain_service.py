@@ -1,5 +1,7 @@
 from app.core.config import settings
+from app.schemas.etherscan_schema import EtherscanResponse
 import httpx
+
 
 async def get_transactions_by_address(address: str):
     """Get transaction list from Etherscan by wallet address."""
@@ -17,15 +19,18 @@ async def get_transactions_by_address(address: str):
         try:
             response = await client.get(settings.ETHERSCAN_API_URL, params=params)
             response.raise_for_status()
-            data = response.json()
 
-            if data["status"] != "1":
-                raise ValueError(f"Etherscan error: {data.get('message')}")
+            print("DEBUG RAW JSON:", response.json())
+            # Validate and parse the response with Pydantic
+            data = EtherscanResponse(**response.json())
 
-            if not isinstance(data["result"], list):
-                raise ValueError("Unexpected response format from Etherscan.")
+            if data.status != "1":
+                raise ValueError(f"Etherscan error: {data.message}")
 
-            return data["result"]
+            return data.result  # EtherscanTransaction list
 
         except httpx.RequestError as e:
             raise ValueError(f"Network error: {str(e)}")
+        except Exception as e:
+            print("DEBUG Exception:", e)  
+            raise ValueError(f"Unexpected error: {str(e)}")

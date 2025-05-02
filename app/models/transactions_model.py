@@ -1,7 +1,10 @@
-class Transaction:
-    def __init__(self, hash, from_address, to_address, value, timestamp):
-        self.hash = hash
-        self.from_address = from_address
-        self.to_address = to_address
-        self.value = value
-        self.timestamp = timestamp
+from pydantic import BaseModel, ConfigDict
+
+class Transaction(BaseModel):
+    hash: str
+    from_address: str
+    to_address: str
+    value: int
+    timestamp: str
+
+    model_config = ConfigDict(from_attributes=True)

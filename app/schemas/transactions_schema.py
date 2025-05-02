@@ -1,11 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 
 class TransactionSchema(BaseModel):
     hash: str
-    from_address: str
-    to_address: str
-    value: int
-    timestamp: str
+    from_address: str = Field(alias="from")
+    to_address: str = Field(alias="to")
+    value: int = Field(alias="value")
+    timestamp: str = Field(alias="timeStamp")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(extra="allow",from_attributes=True, populate_by_name=True)

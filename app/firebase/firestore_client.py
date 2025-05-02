@@ -1,6 +1,8 @@
 import os
 import json
 import base64
+import asyncio
+
 from google.cloud import firestore
 from google.oauth2 import service_account
 from app.core.config import settings
@@ -19,12 +21,14 @@ else:
 # Create Firestore client
 db = firestore.Client(credentials=credentials)
 
-# Save transactions in batch
-async def save_transactions_batch(transactions: list):
+def _save_transactions_batch_sync(transactions: list):
     batch = db.batch()
-
     for tx in transactions:
         doc_ref = db.collection("transactions").document(tx["hash"])
         batch.set(doc_ref, tx)
-
     batch.commit()
+
+# Save transactions in batch
+async def save_transactions_batch(transactions: list):
+    await asyncio.to_thread(_save_transactions_batch_sync, transactions)
+# Save a single tra
