@@ -17,5 +17,7 @@ COPY . .
 # Expose the standard Cloud Run port
 EXPOSE 8080
 
+# Add the root directory to PYTHONPATH to avoid import errors
+ENV PYTHONPATH=/app
 # Command to start FastAPI with Uvicorn from main.py using the "app" object
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
