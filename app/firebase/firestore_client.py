@@ -7,16 +7,29 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 from app.core.config import settings
 
-# Detect if we are in production (Cloud Run)
-if settings.ENVIRONMENT == "production":
+def get_firestore_credentials():
+    # Try loading from FIREBASE_CREDENTIALS_JSON
     firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
-    if not firebase_json:
-        raise RuntimeError("FIREBASE_CREDENTIALS_JSON no está definida.")
-    decoded = base64.b64decode(firebase_json)
-    cred_dict = json.loads(decoded)
-    credentials = service_account.Credentials.from_service_account_info(cred_dict)
-else:
-    credentials = service_account.Credentials.from_service_account_file(settings.FIREBASE_CREDENTIALS)
+    if firebase_json:
+        try:
+            decoded = base64.b64decode(firebase_json)
+            cred_dict = json.loads(decoded)
+            return service_account.Credentials.from_service_account_info(cred_dict)
+        except Exception as e:
+            raise RuntimeError(f"Error loading FIREBASE_CREDENTIALS_JSON: {e}")
+
+    # Fallback to FIREBASE_CREDENTIALS file path
+    firebase_path = getattr(settings, "FIREBASE_CREDENTIALS", None)
+    if firebase_path:
+        try:
+            return service_account.Credentials.from_service_account_file(firebase_path)
+        except Exception as e:
+            raise RuntimeError(f"Error loading FIREBASE_CREDENTIALS file: {e}")
+
+    raise RuntimeError("No Firebase credentials provided via JSON or file path.")
+
+
+credentials = get_firestore_credentials()
 
 # Create Firestore client
 db = firestore.Client(credentials=credentials)
