@@ -1,18 +1,33 @@
-# routes/alerts.py
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from typing import Optional
 from app.auth.firebase_auth import verify_token
+from app.firebase.firestore_client import db
 
-router = APIRouter()
+router = APIRouter(prefix="/alerts", tags=["alerts"])
 
-@router.get("/alerts")
-def get_alerts(user_data: dict = Depends(verify_token)):
-    uid = user_data["uid"]  # Extract the authenticated user's ID
+@router.get("")
+def get_alerts_by_user(user_data: dict = Depends(verify_token)):
+    """
+    Devuelve alertas filtradas por el usuario autenticado (user_id).
+    """
+    uid = user_data["uid"]
+    alerts_ref = db.collection("alerts").where("user_id", "==", uid).stream()
+    return [doc.to_dict() for doc in alerts_ref]
 
-    # Simulation: example alerts (later we will connect with Firestore or DB)
-    fake_alerts = [
-        {"id": 1, "mensaje": "Transacción sospechosa detectada", "tipo": "critical", "user_id": uid},
-        {"id": 2, "mensaje": "Límite de umbral superado", "tipo": "warning", "user_id": uid}
-    ]
 
-    return {"alerts": fake_alerts}
+@router.get("/by-address")
+def get_alerts_by_address(address: Optional[str] = Query(None, description="Dirección de origen o destino")):
+    """
+    Devuelve alertas filtradas por dirección (from_address o to_address).
+    Si no se pasa dirección, devuelve todas.
+    """
+    alerts_ref = db.collection("alerts")
+
+    if address:
+        query_from = alerts_ref.where("from_address", "==", address).stream()
+        query_to = alerts_ref.where("to_address", "==", address).stream()
+        results = list(query_from) + list(query_to)
+    else:
+        results = alerts_ref.stream()
+
+    return [doc.to_dict() for doc in results]
