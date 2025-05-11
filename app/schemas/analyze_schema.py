@@ -4,8 +4,8 @@ from datetime import datetime
 class TransactionAnalyzeRequest(BaseModel):
     id_transaccion: int
     hash: str
-    count: float
-    source_address: str = Field(..., alias="source_address")
+    amount: float
+    origin_address: str = Field(..., alias="origin_address")
     destination_address: str = Field(..., alias="destination_address")
     date: datetime
 
