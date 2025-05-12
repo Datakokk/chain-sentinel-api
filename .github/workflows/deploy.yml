@@ -49,4 +49,4 @@ jobs:
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars ENVIRONMENT=${{ vars.ENVIRONMENT }},FIREBASE_CREDENTIALS_JSON=${{ secrets.FIREBASE_CREDENTIALS_JSON }},ETHERSCAN_API_KEY=${{ secrets.ETHERSCAN_API_KEY }}, ,ML_SERVICE_URL=${{ secrets.ML_SERVICE_URL }}
+            --set-env-vars ENVIRONMENT=${{ vars.ENVIRONMENT }},FIREBASE_CREDENTIALS_JSON=${{ secrets.FIREBASE_CREDENTIALS_JSON }},ETHERSCAN_API_KEY=${{ secrets.ETHERSCAN_API_KEY }},ML_SERVICE_URL=${{ secrets.ML_SERVICE_URL }}
