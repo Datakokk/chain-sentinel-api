@@ -1,13 +1,13 @@
-import os
 import json
 import base64
-from firebase_admin import auth as firebase_auth, credentials, initialize_app, firestore as firebase_firestore
 import firebase_admin
+from firebase_admin import auth as firebase_auth, credentials, initialize_app, firestore as firebase_firestore
+from app.core.config import settings
 
 # Inicializar Firebase solo una vez
 if not firebase_admin._apps:
-    firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
-    firebase_path = os.getenv("FIREBASE_CREDENTIALS")
+    firebase_json = settings.FIREBASE_CREDENTIALS_JSON
+    firebase_path = settings.FIREBASE_CREDENTIALS
 
     firebase_cred = None
 
