@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.firebase.firestore_client import verify_admin_token
+from app.auth.firebase_auth import verify_admin_token
 from app.services.ml_service import train_model
 from app.core.config import settings
 import httpx

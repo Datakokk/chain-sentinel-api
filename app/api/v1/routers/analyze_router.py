@@ -4,11 +4,11 @@ from datetime import datetime
 
 from app.schemas.analyze_schema import TransactionAnalyzeRequest, TransactionAnalyzeResponse
 from app.services.ml_service import analyze_transaction_ml
-
-# Importa directamente tu helper de Firebase
-from app.firebase.firestore_client import db  # db es firestore.client()
+from app.firebase.firestore_client import save_analyzed_transaction, db
  
 router = APIRouter(tags=["analyze"])
+
+
 
 @router.post("/analyze", response_model=TransactionAnalyzeResponse)
 async def analyze_transaction(tx: TransactionAnalyzeRequest):
@@ -43,6 +43,25 @@ async def analyze_transaction(tx: TransactionAnalyzeRequest):
             status_code=500,
             detail=f"Error al guardar en Firestore: {e}"
         )
+    
+    # 4) Save full transaction with prediction
+    try:
+        transaction_to_save = {
+            "hash": tx.hash,
+            "origin": tx.origin_address,
+            "destination": tx.destination_address,
+            "amount": tx.amount,
+            "prediction_result": "fraud" if analysis["is_fraud"] else "not_fraud"
+        }
+        save_analyzed_transaction(transaction_to_save)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error saving full transaction to Firestore: {e}"
+        )
 
-    # 4) Devuelve al cliente la respuesta tipada
+
+    # 5) Devuelve al cliente la respuesta tipada
     return TransactionAnalyzeResponse(**analysis)
+
+
