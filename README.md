@@ -145,4 +145,4 @@ This project is structured to support Pytest and modular testing (tests folder t
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Firestore](https://firebase.google.com/docs/firestore)
 - [Etherscan API](https://docs.etherscan.io/)
-- Part of the broader [ChainSentinel Ecosystem](https://github.com/your_username/ChainSentinel)
+- Part of the broader [ChainSentinel Ecosystem](https://github.com/Datakokk/)
