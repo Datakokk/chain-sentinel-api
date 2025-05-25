@@ -3,6 +3,8 @@ from fastapi.openapi.models import APIKey
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPBearer
 from app.core import config
+from fastapi.middleware.cors import CORSMiddleware
+
 # Add JWT bearer authentication to the OpenAPI docs
 from fastapi.openapi.models import SecuritySchemeType
 from fastapi.openapi.utils import get_openapi
@@ -28,6 +30,14 @@ app = FastAPI(
         {"name": "ml", "description": "Machine Learning operations"},
     ],
     swagger_ui_init_oauth={"usePkceWithAuthorizationCodeGrant": True}
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # podemos restringir a dominios específico
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(transactions_router, prefix="/api/v1")
