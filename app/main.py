@@ -14,6 +14,8 @@ from app.api.v1.routers.analyze_router import router as analyze_router
 from app.api.v1.routers.risks_router import router as risks_router
 from app.api.v1.routers.admin_register_router import router as admin_register_router
 from app.api.v1.routers.label_router import router as label_router
+from app.api.v1.routers.user_router import router as user_router
+
 
 app = FastAPI(
     title="ChainSentinel API",
@@ -36,6 +38,8 @@ app.include_router(risks_router, prefix="/api/v1")
 app.include_router(ml_router, prefix="/api/v1")
 app.include_router(admin_register_router, prefix="/api/v1")
 app.include_router(label_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
+
 
 @app.get("/")
 def root():
