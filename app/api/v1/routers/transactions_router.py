@@ -3,40 +3,50 @@ from typing import List
 from app.services.blockchain_service import get_transactions_by_address
 from app.firebase.firestore_client import save_transactions_batch
 from app.schemas.transactions_schema import TransactionSchema, TransactionCreateSchema
-from app.schemas.etherscan_schema import EtherscanTransaction
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
+
 @router.get("/{address}", response_model=List[TransactionSchema])
 async def list_transactions(address: str, limit: int = Query(10, ge=1, le=100)):
-    print("get_transactions_by_address:", get_transactions_by_address)
-
     try:
+        # Obtener transacciones (ej. desde Etherscan)
         transactions = await get_transactions_by_address(address)
         transactions = transactions[:limit]
 
-        # Transform EtherscanTransaction objects into TransactionSchema objects
-        parsed_transactions = [TransactionSchema.model_validate(tx) for tx in transactions]
+        normalized = []
 
+        for tx in transactions:
+            normalized_tx = {
+                "hash": tx.hash,
+                "from_address": getattr(tx, "from", tx.from_address),  # compatible con alias si viene de Etherscan
+                "to_address": getattr(tx, "to", tx.to_address),
+                "value": float(tx.value),
+                "timestamp": int(tx.timeStamp if hasattr(tx, "timeStamp") else tx.timestamp),
+                "user_id": None,
+                "status": "pending",
+                "analysis_id": None
+            }
+            normalized.append(normalized_tx)
 
-        # Savve transactions to Firestore
-        print("RAW TX EXAMPLE:", transactions[0])  # muestra la primera transacción
-        print("TX OBJECT:", transactions[0].model_dump())
-        await save_transactions_batch([tx.model_dump() for tx in parsed_transactions])
+        # Guardar en Firestore
+        await save_transactions_batch(normalized)
 
-        return parsed_transactions
+        # Devolver al frontend
+        return normalized
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("", tags=["transactions"])
 async def create_transaction(tx: TransactionCreateSchema):
     """
-    Crea una nueva transacción y evalúa condiciones de alerta.
+    Crea una nueva transacción y la guarda en Firestore.
     """
     try:
         tx_dict = tx.model_dump()
-        await save_transactions_batch([tx_dict])  # llamamos a la función asíncrona
-        return {"message": "Transacción guardada correctamente"}
+        await save_transactions_batch([tx_dict])
+        return {"message": "Transacción guardada correctamente", "transaction": tx_dict}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar transacción: {str(e)}")
