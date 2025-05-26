@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from app.auth.firebase_auth import verify_token
-from app.firebase.init import firestore
+from firebase_admin import firestore  # 🔁 importa el módulo
+from firebase_admin.firestore import Client  # opcional si quieres tipado
 
-
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"]
-)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.get("/me", summary="Get current authenticated user")
 def get_current_user(
@@ -15,7 +12,9 @@ def get_current_user(
 ):
     try:
         user_id = credentials["uid"]
-        doc_ref = firestore.collection("users").document(user_id)
+        db = firestore.client()  # ✅ instancia de Firestore
+
+        doc_ref = db.collection("users").document(user_id)
         doc = doc_ref.get()
 
         if not doc.exists:
@@ -29,6 +28,5 @@ def get_current_user(
         return user_data
 
     except Exception as e:
-        # 🔥 Log para Cloud Run o consola
         print("🔥 Error in /auth/me:", str(e))
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
