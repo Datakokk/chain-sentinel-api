@@ -11,20 +11,23 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 @router.get("")
 def get_alerts_by_user(user_data: dict = Depends(verify_token)):
     """
-    Devuelve alertas filtradas por el usuario autenticado (user_id).
+    Devuelve alertas desde la subcolección del usuario autenticado.
     """
     uid = user_data["uid"]
-    alerts_ref = db.collection("alerts").where("user_id", "==", uid).stream()
-    return [doc.to_dict() for doc in alerts_ref]
+    alerts_ref = db.collection("users").document(uid).collection("alerts").stream()
+    return [doc.to_dict() | {"id": doc.id} for doc in alerts_ref]
 
 
 @router.get("/by-address")
-def get_alerts_by_address(address: Optional[str] = Query(None, description="Dirección de origen o destino")):
+def get_alerts_by_address(
+    address: Optional[str] = Query(None, description="Dirección de origen o destino"),
+    user_data: dict = Depends(verify_token)
+):
     """
-    Devuelve alertas filtradas por dirección (from_address o to_address).
-    Si no se pasa dirección, devuelve todas.
+    Devuelve alertas por dirección, solo dentro del usuario autenticado.
     """
-    alerts_ref = db.collection("alerts")
+    uid = user_data["uid"]
+    alerts_ref = db.collection("users").document(uid).collection("alerts")
 
     if address:
         query_from = alerts_ref.where("from_address", "==", address).stream()
@@ -33,7 +36,8 @@ def get_alerts_by_address(address: Optional[str] = Query(None, description="Dire
     else:
         results = alerts_ref.stream()
 
-    return [doc.to_dict() for doc in results]
+    return [doc.to_dict() | {"id": doc.id} for doc in results]
+
 
 @router.post("")
 def create_alert(
@@ -41,14 +45,14 @@ def create_alert(
     user_data: dict = Depends(verify_token)
 ):
     """
-    Creates a new alert associated with the authenticated user.
+    Crea una alerta dentro del usuario autenticado.
     """
     uid = user_data["uid"]
     data = alert.dict()
     data["user_id"] = uid
     data["created_at"] = data.get("created_at") or datetime.utcnow()
 
-    doc_ref = db.collection("alerts").add(data)
+    doc_ref = db.collection("users").document(uid).collection("alerts").add(data)
     alert_id = doc_ref[1].id  # Firestore devuelve (write_result, reference)
     return {
         "message": "Alerta creada correctamente",
@@ -63,18 +67,14 @@ def delete_alert(
     user_data: dict = Depends(verify_token)
 ):
     """
-    Deletes an alert by its ID if it belongs to the authenticated user.
+    Elimina una alerta por ID, solo si pertenece al usuario autenticado.
     """
     uid = user_data["uid"]
-    alert_ref = db.collection("alerts").document(alert_id)
+    alert_ref = db.collection("users").document(uid).collection("alerts").document(alert_id)
     alert = alert_ref.get()
 
     if not alert.exists:
         raise HTTPException(status_code=404, detail="Alerta no encontrada")
-
-    alert_data = alert.to_dict()
-    if alert_data.get("user_id") != uid:
-        raise HTTPException(status_code=403, detail="No autorizado para eliminar esta alerta")
 
     alert_ref.delete()
     return {"message": "Alerta eliminada correctamente", "alert_id": alert_id}

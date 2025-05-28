@@ -1,22 +1,26 @@
 # app/api/v1/routers/analyze.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 
 from app.schemas.analyze_schema import TransactionAnalyzeRequest, TransactionAnalyzeResponse
 from app.services.ml_service import analyze_transaction_ml
-from app.firebase.firestore_client import save_analyzed_transaction, db
- 
+from app.auth.firebase_auth import verify_token
+from app.firebase.firestore_client import db
+
 router = APIRouter(tags=["analyze"])
 
-
-
 @router.post("/analyze", response_model=TransactionAnalyzeResponse)
-async def analyze_transaction(tx: TransactionAnalyzeRequest):
+async def analyze_transaction(
+    tx: TransactionAnalyzeRequest,
+    user_data: dict = Depends(verify_token)
+):
     """
-    Recibe una transacción, la envía al microservicio de ML
-    y guarda el resultado en Firestore.
+    Recibe una transacción, la envía al microservicio de ML,
+    y guarda el resultado en Firestore bajo el usuario autenticado.
     """
-    # 1) Envía los datos brutos al ML
+    uid = user_data["uid"]
+
+    # 1) Enviar los datos brutos al microservicio ML
     try:
         ml_resp = await analyze_transaction_ml(tx.dict(by_alias=True))
     except Exception as e:
@@ -25,43 +29,45 @@ async def analyze_transaction(tx: TransactionAnalyzeRequest):
             detail=f"Error al contactar con el ML service: {e}"
         )
 
-    # 2) Monta el documento de resultado
+    # 2) Montar el documento de análisis
     analysis = {
         "id_transaccion": tx.id_transaccion,
-        "is_fraud":    ml_resp.get("is_fraud", False),
-        "risk_score":  ml_resp.get("risk_score", 0.0),
+        "is_fraud": ml_resp.get("is_fraud", False),
+        "risk_score": ml_resp.get("risk_score", 0.0),
         "analyzed_at": datetime.utcnow().isoformat() + "Z"
     }
 
-    # 3) Guarda en Firestore usando el cliente ya inicializado
+    # 3) Guardar análisis en subcolección del usuario
     try:
-        doc_ref = db.collection("transaction_analyses") \
-                    .document(str(analysis["id_transaccion"]))
-        doc_ref.set(analysis)
+        db.collection("users").document(uid) \
+          .collection("transaction_analyses") \
+          .document(str(analysis["id_transaccion"])) \
+          .set(analysis)
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error al guardar en Firestore: {e}"
+            detail=f"Error al guardar análisis en Firestore: {e}"
         )
-    
-    # 4) Save full transaction with prediction
+
+    # 4) Guardar transacción completa con resultado
     try:
         transaction_to_save = {
             "hash": tx.hash,
             "origin": tx.origin_address,
             "destination": tx.destination_address,
             "amount": tx.amount,
-            "prediction_result": "fraud" if analysis["is_fraud"] else "not_fraud"
+            "prediction_result": "fraud" if analysis["is_fraud"] else "not_fraud",
+            "analysis_timestamp": analysis["analyzed_at"]
         }
-        save_analyzed_transaction(transaction_to_save)
+
+        db.collection("users").document(uid) \
+          .collection("analyzed_transactions") \
+          .add(transaction_to_save)
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error saving full transaction to Firestore: {e}"
+            detail=f"Error al guardar transacción en Firestore: {e}"
         )
 
-
-    # 5) Devuelve al cliente la respuesta tipada
+    # 5) Devolver respuesta
     return TransactionAnalyzeResponse(**analysis)
-
-
