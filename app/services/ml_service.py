@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import httpx
 from typing import Any, Dict
 from app.core.config import settings
@@ -25,9 +26,13 @@ async def analyze_transaction_ml(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
     print("ML PAYLOAD >>>", ml_payload)
     async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.post(f"{ML_SERVICE_URL}/predict", json=ml_payload)
-        resp.raise_for_status()
-        return resp.json()
+        try:
+            resp = await client.post(f"{ML_SERVICE_URL}/predict", json=ml_payload)
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPStatusError as e:
+            print("❌ ML SERVICE ERROR RESPONSE >>>", resp.text)
+            raise HTTPException(status_code=500, detail=f"Error al contactar con el ML service: {resp.text}")
     
 def train_model():
     # Here goes your real training logic, for now we simulate
