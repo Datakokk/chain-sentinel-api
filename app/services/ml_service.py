@@ -21,7 +21,7 @@ async def analyze_transaction_ml(payload: Dict[str, Any]) -> Dict[str, Any]:
         "amount":              payload["amount"],              # o payload["count"] según tu esquema
         "origin_address":      payload["origin_address"],      # alinea nombres
         "destination_address": payload["destination_address"],
-        "timestamp":           ts,
+        "date":           ts,
     }
     async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.post(f"{ML_SERVICE_URL}/predict", json=ml_payload)
