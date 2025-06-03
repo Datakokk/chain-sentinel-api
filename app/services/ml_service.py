@@ -23,8 +23,8 @@ async def analyze_transaction_ml(payload: Dict[str, Any]) -> Dict[str, Any]:
         "destination_address": payload["destination_address"],
         "date":           ts,
     }
+    print("ML PAYLOAD >>>", ml_payload)
     async with httpx.AsyncClient(timeout=10.0) as client:
-        print("ML PAYLOAD >>>", ml_payload)
         resp = await client.post(f"{ML_SERVICE_URL}/predict", json=ml_payload)
         resp.raise_for_status()
         return resp.json()
