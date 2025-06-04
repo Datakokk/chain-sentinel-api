@@ -44,15 +44,26 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
             "type": alert["type"],
             "message": alert["message"],
             "severity": alert["severity"],
-            "user_id": user_id  # <- Esto es lo que permite luego filtrar
+            "user_id": user_id
         }
-        
-        
+
+        # Verificar si el documento del usuario existe en Firestore
+        try:
+            user_ref = db.collection("users").document(user_id)
+            user_snapshot = user_ref.get()
+            if not user_snapshot.exists:
+                print(f"[WARNING] El documento users/{user_id} NO existe en Firestore")
+            else:
+                print(f"[DEBUG] El documento users/{user_id} existe correctamente")
+        except Exception as e:
+            print(f"[ERROR] No se pudo comprobar la existencia del documento de usuario: {e}")
+    
         try:
             print(f"[DEBUG] Guardando alerta en users/{user_id}/alerts: {alert_doc}")
             db.collection("users").document(user_id).collection("alerts").add(alert_doc)
         except Exception as e:
             print(f"[ERROR] No se pudo guardar la alerta en Firestore: {e}")
+
     
     print(f"[DEBUG] Total de alertas generadas: {len(triggered_alerts)}")
 

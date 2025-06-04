@@ -20,7 +20,7 @@ async def analyze_transaction(
     y guarda el resultado en Firestore bajo el usuario autenticado.
     """
     uid = user_data["uid"]
-
+    print(f"[DEBUG] UID recibido desde verify_token: {uid}")
     # Validación de hashes maliciosos o inexistentes conocidos
     HASHES_INVALIDOS = {
         "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdf",
@@ -86,6 +86,8 @@ async def analyze_transaction(
         )
     
     # 5) Verificar condiciones de alerta
+    print(f"[DEBUG] Llamando a check_alert_conditions con user_id={uid}")
+
     check_alert_conditions(
         transaction={
             "hash": tx.hash,
