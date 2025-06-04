@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 
 from app.schemas.analyze_schema import TransactionAnalyzeRequest, TransactionAnalyzeResponse
+from app.services.alert_service import check_alert_conditions
 from app.services.ml_service import analyze_transaction_ml
 from app.auth.firebase_auth import verify_token
 from app.firebase.firestore_client import db
@@ -83,6 +84,18 @@ async def analyze_transaction(
             status_code=500,
             detail=f"Error al guardar transacción en Firestore: {e}"
         )
+    
+    # 5) Verificar condiciones de alerta
+    check_alert_conditions(
+        transaction={
+            "hash": tx.hash,
+            "from_address": tx.origin_address,
+            "to_address": tx.destination_address,
+            "value": tx.amount
+        },
+        user_id=uid
+    )
 
-    # 5) Devolver respuesta
+
+    # 6) Devolver respuesta
     return TransactionAnalyzeResponse(**analysis)
