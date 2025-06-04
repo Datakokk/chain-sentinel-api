@@ -42,6 +42,8 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
             "severity": alert["severity"],
             "user_id": user_id  # <- Esto es lo que permite luego filtrar
         }
-        db.collection(ALERTS_COLLECTION).add(alert_doc)
+        
+        if user_id:
+            db.collection("users").document(user_id).collection("alerts").add(alert_doc)
 
     return triggered_alerts
