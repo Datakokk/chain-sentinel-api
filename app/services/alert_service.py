@@ -7,9 +7,13 @@ SUSPICIOUS_COLLECTION = "suspicious_addresses"
 ALERTS_COLLECTION = "alerts"
 
 def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
+
     from_address = transaction.get("from_address")
     to_address = transaction.get("to_address")
     value = transaction.get("value")
+
+    print(f"[DEBUG] Revisando condiciones de alerta para usuario: {user_id}")
+    print(f"[DEBUG] Transacción recibida: {transaction}")
 
     triggered_alerts = []
 
@@ -43,7 +47,14 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
             "user_id": user_id  # <- Esto es lo que permite luego filtrar
         }
         
-        if user_id:
+        
+        try:
+            print(f"[DEBUG] Guardando alerta en users/{user_id}/alerts: {alert_doc}")
             db.collection("users").document(user_id).collection("alerts").add(alert_doc)
+        except Exception as e:
+            print(f"[ERROR] No se pudo guardar la alerta en Firestore: {e}")
+    
+    print(f"[DEBUG] Total de alertas generadas: {len(triggered_alerts)}")
+
 
     return triggered_alerts
