@@ -9,12 +9,16 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
         decoded_token = auth.verify_id_token(token)
-        return decoded_token
-    except Exception:
+        uid = decoded_token.get("uid")
+        if not uid:
+            raise ValueError("UID no encontrado en el token")
+        return {"uid": uid}
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado"
+            detail=f"Token inválido o expirado: {e}"
         )
+
 
 async def verify_admin_token(token: str) -> dict:
     """
