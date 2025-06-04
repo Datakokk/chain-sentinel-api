@@ -20,6 +20,21 @@ async def analyze_transaction(
     """
     uid = user_data["uid"]
 
+    # Validación de hashes maliciosos o inexistentes conocidos
+    HASHES_INVALIDOS = {
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdf",
+        "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        "0x1111111111111111111111111111111111111111111111111111111111111111",
+    }
+
+    if tx.id_transaccion.lower() in HASHES_INVALIDOS:
+        raise HTTPException(
+            status_code=400,
+            detail="Hash inválido o no existente en la red."
+        )
+
+
     # 1) Enviar los datos brutos al microservicio ML
     try:
         ml_resp = await analyze_transaction_ml(tx.dict(by_alias=True))
