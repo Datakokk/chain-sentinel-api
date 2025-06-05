@@ -88,5 +88,22 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
         except Exception as e:
             print(f"[ERROR] No se pudo guardar la alerta en Firestore: {e}")
 
+        # Guardar alertas en Firestore si se detectó alguna
+    if user_id and triggered_alerts:
+        user_alerts_ref = db.collection("users").document(user_id).collection("alerts")
+        timestamp = datetime.utcnow()
+        for alert in triggered_alerts:
+            alert_data = {
+                "type": alert["type"],
+                "message": alert["message"],
+                "severity": alert["severity"],
+                "from_address": from_address,
+                "to_address": to_address,
+                "value": value,
+                "timestamp": timestamp
+            }
+            user_alerts_ref.add(alert_data)
+
+
     print(f"[DEBUG] Total de alertas generadas: {len(triggered_alerts)}")
     return triggered_alerts
