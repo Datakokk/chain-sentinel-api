@@ -39,9 +39,9 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
         if not user_id:
             print("[ERROR] user_id es None o vacío. No se puede guardar la alerta.")
             continue
-
+        
         print(f"[DEBUG] Guardando alerta para user_id={user_id} >>> {alert}")
-
+    
         try:
             user_ref = db.collection("users").document(user_id)
             user_snapshot = user_ref.get()
@@ -49,9 +49,15 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
                 print(f"[WARNING] El documento users/{user_id} NO existe en Firestore")
             else:
                 print(f"[DEBUG] El documento users/{user_id} existe correctamente")
+                # 👉 Aquí se guarda la alerta en la subcolección 'alerts'
+                user_ref.collection("alerts").add({
+                    **alert,
+                    "created_at": datetime.utcnow().isoformat()
+                })
+                print(f"[DEBUG] Alerta guardada correctamente en alerts/")
         except Exception as e:
-            print(f"[ERROR] No se pudo comprobar la existencia del documento de usuario: {e}")
-            continue
+            print(f"[ERROR] No se pudo guardar la alerta: {e}")
+
 
         try:
             alert_doc = {
