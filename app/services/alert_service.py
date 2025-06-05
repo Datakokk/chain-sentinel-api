@@ -5,9 +5,12 @@ from app.firebase.firestore_client import db
 UMBRAL_VALOR = 10000
 SUSPICIOUS_COLLECTION = "suspicious_addresses"
 
+def sanitize_address(addr: Optional[str]) -> str:
+    return str(addr).strip().lower() if addr else ""
+
 def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
-    from_address = (transaction.get("from_address") or "").strip().lower()
-    to_address = (transaction.get("to_address") or "").strip().lower()
+    from_address = sanitize_address(transaction.get("from_address"))
+    to_address = sanitize_address(transaction.get("to_address"))
     value = transaction.get("value")
 
     print(f"[DEBUG] Revisando condiciones de alerta para usuario: {user_id}")
@@ -30,13 +33,18 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
 
     # Condición de direcciones sospechosas
     suspicious_addresses = db.collection(SUSPICIOUS_COLLECTION).stream()
-    suspicious_set = {doc.id.lower() for doc in suspicious_addresses}
+    suspicious_set = {doc.id.strip().lower() for doc in suspicious_addresses}
     print("[DEBUG] Direcciones sospechosas registradas en Firestore:", suspicious_set)
 
-    print(f"[DEBUG] Comparando from_address: {'✅' if from_address in suspicious_set else '❌'}")
-    print(f"[DEBUG] Comparando to_address: {'✅' if to_address in suspicious_set else '❌'}")
+    # Logs de comparación exacta
+    print(f"[DEBUG] from_address comparado: '{from_address}'")
+    print(f"[DEBUG] to_address comparado: '{to_address}'")
+    for addr in suspicious_set:
+        print(f"[DEBUG] comparando con sospechosa: '{addr}' == '{from_address}' => {addr == from_address}")
+        print(f"[DEBUG] longitudes -> sospechosa: {len(addr)}, from_address: {len(from_address)}")
 
     if from_address in suspicious_set or to_address in suspicious_set:
+        print("[MATCH] Se detectó dirección sospechosa en la transacción")
         triggered_alerts.append({
             "type": "suspicious_address",
             "message": "Dirección sospechosa detectada en la transacción",
