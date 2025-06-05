@@ -78,3 +78,30 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
+if __name__ == "__main__":
+    from app.firebase.firestore_client import db
+
+    user_id = "H02BFT3WGDhKkW0T2RhJaHFTBex2"  # Confirma que este es tu uid real
+    address = "0x9999999999999999999999999999999999999999"
+
+    # Asegurarse de que la dirección sospechosa exista
+    db.collection("suspicious_addresses").document(address).set({})
+    print(f"[OK] Dirección sospechosa '{address}' registrada correctamente")
+
+    # Crear alerta manual simulando una detección
+    alert_doc = {
+        "type": "suspicious_address",
+        "message": "Dirección sospechosa detectada en la transacción",
+        "severity": "warning",
+        "from_address": address,
+        "to_address": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        "value": 420,
+        "timestamp": "2025-06-05T17:00:00Z",
+        "transaction_hash": "0xmanual00000000000000000000000000000000001",
+        "user_id": user_id
+    }
+
+    print(f"[DEBUG] Guardando alerta manual para user_id={user_id}...")
+    db.collection("users").document(user_id).collection("alerts").add(alert_doc)
+    print("[SUCCESS] Alerta registrada correctamente en alerts/")
