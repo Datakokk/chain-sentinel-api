@@ -7,13 +7,21 @@ db = firestore.client()
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
+    print(f"[DEBUG] Token recibido en verify_token: {token[:20]}...")  # solo muestra inicio por seguridad
+
     try:
         decoded_token = auth.verify_id_token(token)
+        print(f"[DEBUG] Token decodificado: {decoded_token}")
+
         uid = decoded_token.get("uid")
         if not uid:
+            print("[ERROR] El token no contiene UID.")
             raise ValueError("UID no encontrado en el token")
+
         return {"uid": uid}
+
     except Exception as e:
+        print(f"[ERROR] Fallo al verificar el token: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Token inválido o expirado: {e}"
