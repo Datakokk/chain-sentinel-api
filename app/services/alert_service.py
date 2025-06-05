@@ -26,12 +26,12 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
 
     # Condición de direcciones sospechosas
     suspicious_addresses = db.collection(SUSPICIOUS_COLLECTION).stream()
-    suspicious_set = {doc.id for doc in suspicious_addresses}
+    suspicious_set = {doc.id.lower() for doc in suspicious_addresses}
 
     # 🧪 Añadir esta línea de depuración:
     print("[DEBUG] Direcciones sospechosas registradas en Firestore:", suspicious_set)
 
-    if from_address in suspicious_set or to_address in suspicious_set:
+    if (from_address or "").lower() in suspicious_set or (to_address or "").lower() in suspicious_set:
         triggered_alerts.append({
             "type": "suspicious_address",
             "message": "Dirección sospechosa detectada en la transacción",
