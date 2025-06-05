@@ -4,7 +4,6 @@ from app.firebase.firestore_client import db
 
 UMBRAL_VALOR = 10000
 SUSPICIOUS_COLLECTION = "suspicious_addresses"
-ALERTS_COLLECTION = "alerts"
 
 def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
 
@@ -17,6 +16,7 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
 
     triggered_alerts = []
 
+    # Condición de valor alto
     if value and float(value) > UMBRAL_VALOR:
         triggered_alerts.append({
             "type": "high_value",
@@ -24,6 +24,7 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
             "severity": "critical"
         })
 
+    # Condición de direcciones sospechosas
     suspicious_addresses = db.collection(SUSPICIOUS_COLLECTION).stream()
     suspicious_set = {doc.id for doc in suspicious_addresses}
 
@@ -39,17 +40,7 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
             print("[ERROR] user_id es None o vacío. No se puede guardar la alerta.")
             continue
 
-        alert_doc = {
-            "transaction_hash": transaction.get("hash"),
-            "from_address": from_address,
-            "to_address": to_address,
-            "value": value,
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": alert["type"],
-            "message": alert["message"],
-            "severity": alert["severity"],
-            "user_id": user_id
-        }
+        print(f"[DEBUG] Guardando alerta para user_id={user_id} >>> {alert}")
 
         try:
             user_ref = db.collection("users").document(user_id)
@@ -61,16 +52,24 @@ def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
         except Exception as e:
             print(f"[ERROR] No se pudo comprobar la existencia del documento de usuario: {e}")
             continue
-        
+
         try:
+            alert_doc = {
+                "transaction_hash": transaction.get("hash"),
+                "from_address": from_address,
+                "to_address": to_address,
+                "value": value,
+                "timestamp": datetime.utcnow().isoformat(),
+                "type": alert["type"],
+                "message": alert["message"],
+                "severity": alert["severity"],
+                "user_id": user_id
+            }
             print(f"[DEBUG] Guardando alerta en users/{user_id}/alerts: {alert_doc}")
             db.collection("users").document(user_id).collection("alerts").add(alert_doc)
         except Exception as e:
             print(f"[ERROR] No se pudo guardar la alerta en Firestore: {e}")
 
-
-    
     print(f"[DEBUG] Total de alertas generadas: {len(triggered_alerts)}")
-
 
     return triggered_alerts
