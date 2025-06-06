@@ -100,10 +100,10 @@ async def analyze_transaction(
 
 
     # 6) Devolver respuesta
-    return {
-     "hash": tx.hash,
-     "amount": tx.amount,
-     "confirmations": 3,  # opcional: puedes hacer dinámico esto
-     "risk_score": analysis["risk_score"],
-     "is_fraud": analysis["is_fraud"]
-}
+    return TransactionAnalyzeResponse(
+    id_transaccion=tx.id_transaccion,
+    is_fraud=analysis["is_fraud"],
+    risk_score=analysis["risk_score"],
+    analyzed_at=analysis["analyzed_at"]
+)
+
