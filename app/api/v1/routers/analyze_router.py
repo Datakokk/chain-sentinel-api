@@ -93,11 +93,17 @@ async def analyze_transaction(
             "hash": tx.hash,
             "from_address": tx.origin_address,
             "to_address": tx.destination_address,
-            "value": tx.amount
-        },
+                "value": tx.amount
+            },
         user_id=uid
     )
 
 
     # 6) Devolver respuesta
-    return TransactionAnalyzeResponse(**analysis)
+    return {
+     "hash": tx.hash,
+     "amount": tx.amount,
+     "confirmations": 3,  # opcional: puedes hacer dinámico esto
+     "risk_score": analysis["risk_score"],
+     "is_fraud": analysis["is_fraud"]
+}
