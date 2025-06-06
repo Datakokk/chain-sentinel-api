@@ -6,13 +6,7 @@ UMBRAL_VALOR = 10000
 SUSPICIOUS_COLLECTION = "suspicious_addresses"
 
 def sanitize_address(addr: Optional[str]) -> str:
-    if not addr:
-        return ""
-    addr = str(addr).strip().lower()
-    if addr.startswith("0x") and len(addr) > 42:
-        addr = addr[:42]  # Truncar a formato de dirección Ethereum
-    return addr
-
+    return str(addr).strip().lower() if addr else ""
 
 def check_alert_conditions(transaction: dict, user_id: Optional[str] = None):
     from_address = sanitize_address(transaction.get("from_address"))
